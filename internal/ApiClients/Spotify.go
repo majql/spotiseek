@@ -45,7 +45,7 @@ func (spotifyService *SpotifyService) Auth() bool {
 }
 
 func (spotifyService *SpotifyService) Ping() {
-	spotifyService.Ping()
+	spotifyService.client.Token()
 }
 
 func (spotifyService *SpotifyService) GetPlaylistTracks(playlistId string, after time.Time) []string {

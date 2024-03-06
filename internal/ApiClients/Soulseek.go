@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type Soulseek interface {
 	Search(query string) SearchResult
 	GetSearchResult(searchId string) SearchResult
 	Transfer(username string, downloadId string, fileSize int) string
+	Ping()
 }
 
 type SearchResult struct {
@@ -65,6 +67,16 @@ func NewSoulseek(host string) *SoulseekService {
 	}
 
 	return ss
+}
+
+func (ss *SoulseekService) Ping() {
+	apiEndpoint := "/api/v0/application"
+	request, _ := http.NewRequest("GET", ss.httpHost+apiEndpoint, nil)
+	_, err := ss.httpClient.Do(request)
+	if err != nil {
+		fmt.Println("Can't connect to Slskd. Quitting.")
+		os.Exit(3)
+	}
 }
 
 func (ss *SoulseekService) Search(query string) SearchResult {
@@ -135,7 +147,7 @@ func (ss SoulseekService) Transfer(username string, filename string, size int) s
 
 	apiEndpoint += url.PathEscape(username)
 
-	fmt.Printf("Walę na %s\n", ss.httpHost+apiEndpoint)
+	// fmt.Printf("Walę na %s\n", ss.httpHost+apiEndpoint)
 
 	jsonData := make(map[string]any, 0)
 	jsonData["filename"] = filename
@@ -148,7 +160,7 @@ func (ss SoulseekService) Transfer(username string, filename string, size int) s
 		panic(err)
 	}
 
-	fmt.Printf(string(jsonRaw))
+	// fmt.Printf(string(jsonRaw))
 	request, err := http.NewRequest("POST", ss.httpHost+apiEndpoint, bytes.NewBuffer(jsonRaw))
 	if err != nil {
 		panic(err)
@@ -156,7 +168,6 @@ func (ss SoulseekService) Transfer(username string, filename string, size int) s
 	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
 	response, err := ss.httpClient.Do(request)
-	fmt.Printf("HTTP %s", response.Status)
 	if err != nil {
 		panic(err)
 	}
@@ -167,13 +178,7 @@ func (ss SoulseekService) Transfer(username string, filename string, size int) s
 		}
 	}(response.Body)
 
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(body)
-
+	_, err = io.ReadAll(response.Body)
 	if err != nil {
 		panic(err)
 	}

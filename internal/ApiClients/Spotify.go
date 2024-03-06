@@ -3,11 +3,12 @@ package ApiClients
 import (
 	"context"
 	"fmt"
-	spotifyVendored "github.com/zmb3/spotify"
-	"golang.org/x/oauth2/clientcredentials"
 	"log"
 	"strings"
 	"time"
+
+	spotifyVendored "github.com/zmb3/spotify"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 type SpotifyService struct {
@@ -43,6 +44,10 @@ func (spotifyService *SpotifyService) Auth() bool {
 	return true
 }
 
+func (spotifyService *SpotifyService) Ping() {
+	spotifyService.Ping()
+}
+
 func (spotifyService *SpotifyService) GetPlaylistTracks(playlistId string, after time.Time) []string {
 	tracks, err := spotifyService.client.GetPlaylistTracks(spotifyVendored.ID(playlistId))
 	if err != nil {
@@ -53,7 +58,7 @@ func (spotifyService *SpotifyService) GetPlaylistTracks(playlistId string, after
 	for _, track := range tracks.Tracks {
 		trackTime, _ := time.Parse(time.RFC3339, track.AddedAt)
 		if !trackTime.After(after) {
-			//fmt.Println(track.Track.Name, trackTime.GoString(), after.GoString(), "Continuing")
+			// fmt.Println(track.Track.Name, trackTime.GoString(), after.GoString(), "Continuing")
 			continue
 		}
 
@@ -64,7 +69,7 @@ func (spotifyService *SpotifyService) GetPlaylistTracks(playlistId string, after
 		}
 
 		entryFull := fmt.Sprintf("%s %s", strings.Join(artistsFull, " "), track.Track.Name)
-		log.Printf("Found playlist entry: '%s'", entryFull)
+		log.Printf("New playlist entry: '%s'", entryFull)
 		playlistContents = append(playlistContents, entryFull)
 	}
 

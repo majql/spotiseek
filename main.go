@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-var lastPlaylistCheck time.Time
-
 func checkPlaylistContents(queue chan string, spotify *ApiClients.SpotifyService, tracklistId string) {
 	lastPlaylistCheck := getLastPlaylistCheck()
 
@@ -28,7 +26,7 @@ func checkPlaylistContents(queue chan string, spotify *ApiClients.SpotifyService
 func getLastPlaylistCheck() time.Time {
 	timestampRaw, _ := os.ReadFile("timestamp")
 	timestamp := bytes.NewBuffer(timestampRaw)
-	lastPlaylistCheck, _ = time.Parse(time.RFC822, timestamp.String())
+	lastPlaylistCheck, _ := time.Parse(time.RFC822, timestamp.String())
 
 	return lastPlaylistCheck
 }
@@ -117,16 +115,11 @@ func initSignalHandling() {
 
 func main() {
 	trackQueue := make(chan string)
-	lastPlaylistCheck = time.Now()
-
-	timestampRaw, _ := os.ReadFile("timestamp")
-	timestamp := bytes.NewBuffer(timestampRaw)
-	lastPlaylistCheck, _ = time.Parse(time.RFC822, timestamp.String())
 
 	spotify := ApiClients.NewSpotify(os.Getenv("SPOTIFY_ID"), os.Getenv("SPOTIFY_SECRET"))
 	soulseek := ApiClients.NewSoulseek(os.Getenv("SLSKD_URL"))
 
-	soulseek.Ping()
+	// soulseek.Ping()
 
 	// initialize background job
 	go searchForQueueItems(trackQueue, soulseek)

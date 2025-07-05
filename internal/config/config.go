@@ -12,6 +12,8 @@ type Config struct {
 	SpotifySecret     string
 	SpotifyPlaylistID string
 	SoulseekURL       string
+	TelegramBotToken  string
+	TelegramChatID    string
 
 	TimestampFile string
 	CheckInterval time.Duration
@@ -24,6 +26,8 @@ func LoadFromEnv() (Config, error) {
 		SpotifySecret:     os.Getenv("SPOTIFY_SECRET"),
 		SpotifyPlaylistID: os.Getenv("SPOTIFY_PLAYLIST_ID"),
 		SoulseekURL:       os.Getenv("SLSKD_URL"),
+		TelegramBotToken:  os.Getenv("TELEGRAM_BOT_TOKEN"),
+		TelegramChatID:    os.Getenv("TELEGRAM_CHAT_ID"),
 		TimestampFile:     "timestamp",
 		CheckInterval:     time.Minute,
 	}

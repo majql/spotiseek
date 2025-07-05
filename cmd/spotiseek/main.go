@@ -30,6 +30,7 @@ func main() {
     tsStore := store.FileStore{Path: cfg.TimestampFile}
 
     application := app.New(cfg, spotifyClient, soulseekClient, tsStore, log.Default())
+    log.Printf("Spotiseek starting: Spotify playlist %s, check interval %s, Soulseek URL %s", cfg.SpotifyPlaylistID, cfg.CheckInterval, cfg.SoulseekURL)
 
     ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
     defer stop()

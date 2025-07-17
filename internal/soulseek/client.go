@@ -98,3 +98,46 @@ func (c *Client) Transfer(username, filename string, size int) error {
 	resp.Body.Close()
 	return nil
 }
+
+// ListSearches retrieves all searches from the Soulseek daemon
+func (c *Client) ListSearches() ([]SearchResult, error) {
+	req, _ := http.NewRequest("GET", c.host+"/api/v0/searches", nil)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	
+	var searches []SearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&searches); err != nil {
+		return nil, err
+	}
+	return searches, nil
+}
+
+// DeleteSearch removes a specific search by ID
+func (c *Client) DeleteSearch(id string) error {
+	req, _ := http.NewRequest("DELETE", c.host+"/api/v0/searches/"+id, nil)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
+}
+
+// DeleteAllSearches removes all searches from the Soulseek daemon
+func (c *Client) DeleteAllSearches() error {
+	searches, err := c.ListSearches()
+	if err != nil {
+		return fmt.Errorf("failed to list searches: %w", err)
+	}
+	
+	for _, search := range searches {
+		if err := c.DeleteSearch(search.ID); err != nil {
+			return fmt.Errorf("failed to delete search %s: %w", search.ID, err)
+		}
+	}
+	
+	return nil
+}

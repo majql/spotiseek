@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"path"
@@ -45,6 +46,7 @@ func (a *App) notifyTelegram(message string) {
 	if a.cfg.TelegramBotToken == "" || a.cfg.TelegramChatID == "" {
 		return
 	}
+	
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", a.cfg.TelegramBotToken)
 	payload := map[string]string{"chat_id": a.cfg.TelegramChatID, "text": message}
 	data, err := json.Marshal(payload)
@@ -52,12 +54,26 @@ func (a *App) notifyTelegram(message string) {
 		a.logger.Printf("telegram marshal error: %v", err)
 		return
 	}
-	resp, err := http.Post(url, "application/json", bytes.NewReader(data))
+
+	// Create HTTP client with timeout to prevent hanging
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Post(url, "application/json", bytes.NewReader(data))
 	if err != nil {
 		a.logger.Printf("telegram send error: %v", err)
 		return
 	}
 	defer resp.Body.Close()
+
+	// Read and discard response body to allow connection reuse
+	_, err = io.Copy(io.Discard, resp.Body)
+	if err != nil {
+		a.logger.Printf("telegram response read error: %v", err)
+	}
+
+	// Check if the request was successful
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		a.logger.Printf("telegram API error: status %d", resp.StatusCode)
+	}
 }
 
 // App holds all collaborators required to run the business logic.

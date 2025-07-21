@@ -148,12 +148,29 @@ func (a *App) enqueueNewTracks(queue chan<- string) error {
 }
 
 func (a *App) consumeQueue(ctx context.Context, queue <-chan string) {
+	// Create a ticker for throttling searches - one per second
+	searchTicker := time.NewTicker(1 * time.Second)
+	defer searchTicker.Stop()
+	
+	// Buffer for pending searches
+	var pendingSearches []string
+	
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case q := <-queue:
-			go a.handleSearch(ctx, q)
+			// Add new search to pending queue
+			pendingSearches = append(pendingSearches, q)
+			a.logger.Printf("queued search: %s (pending: %d)", q, len(pendingSearches))
+		case <-searchTicker.C:
+			// Process one search per tick (1 second)
+			if len(pendingSearches) > 0 {
+				query := pendingSearches[0]
+				pendingSearches = pendingSearches[1:]
+				a.logger.Printf("processing throttled search: %s (remaining: %d)", query, len(pendingSearches))
+				go a.handleSearch(ctx, query)
+			}
 		}
 	}
 }

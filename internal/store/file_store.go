@@ -25,7 +25,7 @@ func (f FileStore) Get() (time.Time, error) {
 		}
 		return time.Time{}, err
 	}
-	t, err := time.Parse(time.RFC3339, string(data))
+	t, err := time.Parse(time.RFC3339Nano, string(data))
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -33,5 +33,5 @@ func (f FileStore) Get() (time.Time, error) {
 }
 
 func (f FileStore) Put(t time.Time) error {
-	return os.WriteFile(f.Path, []byte(t.Format(time.RFC3339)), 0o644)
+	return os.WriteFile(f.Path, []byte(t.Format(time.RFC3339Nano)), 0o644)
 }

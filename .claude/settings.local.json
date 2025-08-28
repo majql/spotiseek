@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "WebSearch",
+      "WebFetch(domain:slskd-api.readthedocs.io)",
+      "Bash(go mod init:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(go mod:*)",
+      "Bash(go build ./...)",
+      "Bash(go get:*)",
+      "Bash(go build:*)",
+      "Bash(mv:*)",
+      "Bash(make:*)",
+      "Bash(./bin/spotiseek:*)",
+      "Bash(./bin/worker:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(docker logs:*)",
+      "Bash(docker build:*)",
+      "Bash(docker exec:*)",
+      "Bash(git log:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker start:*)",
+      "Bash(docker image rm:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker run:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(go run:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "acceptEdits"
+  }
+}

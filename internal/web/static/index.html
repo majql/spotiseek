@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotiseek - Playlist Monitor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Spotiseek</h1>
+            <p>Spotify Playlist Monitor with Automated Downloads</p>
+        </header>
+
+        <main>
+            <!-- Add Playlist Section -->
+            <section class="add-playlist">
+                <h2>Add Playlist</h2>
+                <form id="add-playlist-form">
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            id="playlist-input"
+                            placeholder="Enter Spotify playlist ID or URL"
+                            required
+                        >
+                        <button type="submit" id="add-btn">Watch Playlist</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Status Section -->
+            <section class="status">
+                <div class="status-header">
+                    <h2>Watched Playlists</h2>
+                    <button id="refresh-btn" class="refresh-btn">🔄 Refresh</button>
+                </div>
+
+                <div id="loading" class="loading hidden">Loading...</div>
+                <div id="error-message" class="error-message hidden"></div>
+                <div id="success-message" class="success-message hidden"></div>
+
+                <div id="playlist-count" class="playlist-count">0 playlists being watched</div>
+
+                <div id="playlists-container" class="playlists-container">
+                    <!-- Playlists will be populated here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

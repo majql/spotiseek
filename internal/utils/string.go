@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -10,6 +9,7 @@ import (
 	"unicode"
 
 	"golang.org/x/text/unicode/norm"
+	"spotiseek/internal/logger"
 	"spotiseek/pkg/models"
 )
 
@@ -226,11 +226,11 @@ func FindBestMatch(query string, results []models.SearchResult) *models.SearchRe
 	// First filter to only MP3 files
 	mp3Results := FilterMP3Files(results)
 	if len(mp3Results) == 0 {
-		log.Printf("No MP3 files found in %d search results", len(results))
+		logger.Debug("No MP3 files found in %d search results", len(results))
 		return nil
 	}
 
-	log.Printf("Filtering %d results to %d MP3 files", len(results), len(mp3Results))
+	logger.Debug("Filtering %d results to %d MP3 files", len(results), len(mp3Results))
 
 	// Calculate scores for all MP3 files
 	var scores []MatchScore
@@ -245,14 +245,14 @@ func FindBestMatch(query string, results []models.SearchResult) *models.SearchRe
 	})
 
 	// Log top matches for analysis
-	log.Printf("Match analysis for query: %s", query)
+	logger.Debug("Match analysis for query: %s", query)
 	maxToLog := 5
 	if len(scores) < maxToLog {
 		maxToLog = len(scores)
 	}
-	
+
 	for i := 0; i < maxToLog; i++ {
-		log.Printf("  %d. Score: %.3f - %s (%s)", 
+		logger.Debug("  %d. Score: %.3f - %s (%s)",
 			i+1, scores[i].Score, scores[i].Filename, scores[i].Reason)
 	}
 
@@ -261,35 +261,46 @@ func FindBestMatch(query string, results []models.SearchResult) *models.SearchRe
 		// Find the result object for the best match
 		for _, result := range mp3Results {
 			if result.Filename == scores[0].Filename {
-				log.Printf("Selected best match: %s (score: %.3f)", result.Filename, scores[0].Score)
+				logger.Info("Selected best match: %s (score: %.3f)", result.Filename, scores[0].Score)
 				return &result
 			}
 		}
 	}
 
-	log.Printf("No suitable match found (best score: %.3f)", scores[0].Score)
+	logger.Warn("No suitable match found (best score: %.3f)", scores[0].Score)
 	return nil
 }
 
 // LogMatchDecision logs detailed information about the match decision
 func LogMatchDecision(query string, results []models.SearchResult, selected *models.SearchResult) {
-	log.Printf("=== MATCH DECISION LOG ===")
-	log.Printf("Query: %s", query)
-	log.Printf("Normalized query: %s", NormalizeString(query))
-	log.Printf("Total results: %d", len(results))
-	
-	mp3Results := FilterMP3Files(results)
-	log.Printf("MP3 results: %d", len(mp3Results))
-	
-	if selected != nil {
-		log.Printf("SELECTED: %s", selected.Filename)
-		score := CalculateMatchScore(query, selected.Filename)
-		log.Printf("  Score: %.3f (%s)", score.Score, score.Reason)
-		log.Printf("  User: %s", selected.Username)
-		log.Printf("  Size: %d bytes", selected.Size)
-	} else {
-		log.Printf("SELECTED: None (no suitable match)")
+	if !logger.IsDebugMode() {
+		// In normal mode, just log basic info
+		if selected != nil {
+			logger.Info("Match found: %s (from %d results)", selected.Filename, len(results))
+		} else {
+			logger.Info("No match found from %d results", len(results))
+		}
+		return
 	}
-	
-	log.Printf("========================")
+
+	// Detailed debug logging
+	logger.Debug("=== MATCH DECISION LOG ===")
+	logger.Debug("Query: %s", query)
+	logger.Debug("Normalized query: %s", NormalizeString(query))
+	logger.Debug("Total results: %d", len(results))
+
+	mp3Results := FilterMP3Files(results)
+	logger.Debug("MP3 results: %d", len(mp3Results))
+
+	if selected != nil {
+		logger.Debug("SELECTED: %s", selected.Filename)
+		score := CalculateMatchScore(query, selected.Filename)
+		logger.Debug("  Score: %.3f (%s)", score.Score, score.Reason)
+		logger.Debug("  User: %s", selected.Username)
+		logger.Debug("  Size: %d bytes", selected.Size)
+	} else {
+		logger.Debug("SELECTED: None (no suitable match)")
+	}
+
+	logger.Debug("========================")
 }

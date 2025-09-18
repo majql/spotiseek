@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	"spotiseek/internal/logger"
 	"spotiseek/pkg/models"
 )
 
@@ -240,22 +240,22 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 	sanitizedName := sanitizeForFilesystem(playlistName)
 	downloadPath := filepath.Join(workingDir, sanitizedName)
 
-	log.Printf("Creating cluster for playlist %s", playlistID)
+	logger.Info("Creating cluster for playlist %s", playlistID)
 
 	// Pull required images
-	log.Printf("Pulling Docker images...")
+	logger.Info("Pulling Docker images...")
 	if err := m.pullImage(ctx, SlskdImage); err != nil {
 		return nil, err
 	}
 
 	// Create network
-	log.Printf("Creating network %s", networkName)
+	logger.Info("Creating network %s", networkName)
 	if err := m.createNetwork(ctx, networkName); err != nil {
 		return nil, err
 	}
 
 	// Create slskd container
-	log.Printf("Creating slskd container")
+	logger.Info("Creating slskd container")
 	slskdID, err := m.createSlskdContainer(ctx, playlistID, networkName, downloadPath)
 	if err != nil {
 		m.removeNetwork(ctx, networkName) // Cleanup
@@ -264,31 +264,31 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 
 	// Create worker container (only if we have the image)
 	var workerID string
-	log.Printf("Creating worker container")
+	logger.Info("Creating worker container")
 	workerID, err = m.createWorkerContainer(ctx, playlistID, networkName, config)
 	if err != nil {
-		log.Printf("Warning: Failed to create worker container (image may not exist): %v", err)
-		log.Printf("You'll need to build the worker image first")
+		logger.Warn("Failed to create worker container (image may not exist): %v", err)
+		logger.Warn("You'll need to build the worker image first")
 	}
 
 	// Start containers
-	log.Printf("Starting slskd container")
+	logger.Info("Starting slskd container")
 	if err := m.startContainer(ctx, slskdID); err != nil {
 		m.DestroyCluster(ctx, playlistID) // Cleanup
 		return nil, fmt.Errorf("failed to start slskd container: %w", err)
 	}
 
 	if workerID != "" {
-		log.Printf("Starting worker container")
+		logger.Info("Starting worker container")
 		if err := m.startContainer(ctx, workerID); err != nil {
-			log.Printf("Warning: Failed to start worker container: %v", err)
+			logger.Warn("Failed to start worker container: %v", err)
 		}
 	}
 
-	log.Printf("Cluster containers created and started:")
-	log.Printf("  Network: %s", networkName)
-	log.Printf("  Slskd container: %s (alias: slskd)", fmt.Sprintf("spotiseek-%s-slskd", playlistID))
-	log.Printf("  Worker container: %s (alias: worker)", fmt.Sprintf("spotiseek-%s-worker", playlistID))
+	logger.Info("Cluster containers created and started:")
+	logger.Info("  Network: %s", networkName)
+	logger.Info("  Slskd container: %s (alias: slskd)", fmt.Sprintf("spotiseek-%s-slskd", playlistID))
+	logger.Info("  Worker container: %s (alias: worker)", fmt.Sprintf("spotiseek-%s-worker", playlistID))
 
 	clusterInfo := &models.ClusterInfo{
 		PlaylistID: playlistID,
@@ -300,12 +300,12 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 		CreatedAt:   time.Now(),
 	}
 
-	log.Printf("Cluster created successfully for playlist %s", playlistID)
+	logger.Info("Cluster created successfully for playlist %s", playlistID)
 	return clusterInfo, nil
 }
 
 func (m *Manager) DestroyCluster(ctx context.Context, playlistID string) error {
-	log.Printf("Destroying cluster for playlist %s", playlistID)
+	logger.Info("Destroying cluster for playlist %s", playlistID)
 
 	containerNames := []string{
 		fmt.Sprintf("spotiseek-%s-worker", playlistID),
@@ -316,29 +316,29 @@ func (m *Manager) DestroyCluster(ctx context.Context, playlistID string) error {
 	for _, name := range containerNames {
 		containerID, err := m.findContainerByName(ctx, name)
 		if err != nil {
-			log.Printf("Container %s not found, skipping", name)
+			logger.Info("Container %s not found, skipping", name)
 			continue
 		}
 
-		log.Printf("Stopping container %s", name)
+		logger.Info("Stopping container %s", name)
 		if err := m.stopContainer(ctx, containerID); err != nil {
-			log.Printf("Warning: Failed to stop container %s: %v", name, err)
+			logger.Info("Warning: Failed to stop container %s: %v", name, err)
 		}
 
-		log.Printf("Removing container %s", name)
+		logger.Info("Removing container %s", name)
 		if err := m.removeContainer(ctx, containerID); err != nil {
-			log.Printf("Warning: Failed to remove container %s: %v", name, err)
+			logger.Info("Warning: Failed to remove container %s: %v", name, err)
 		}
 	}
 
 	// Remove network
 	networkName := fmt.Sprintf("spotiseek-%s", playlistID)
-	log.Printf("Removing network %s", networkName)
+	logger.Info("Removing network %s", networkName)
 	if err := m.removeNetwork(ctx, networkName); err != nil {
-		log.Printf("Warning: Failed to remove network %s: %v", networkName, err)
+		logger.Info("Warning: Failed to remove network %s: %v", networkName, err)
 	}
 
-	log.Printf("Cluster destroyed for playlist %s", playlistID)
+	logger.Info("Cluster destroyed for playlist %s", playlistID)
 	return nil
 }
 

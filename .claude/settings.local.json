@@ -29,7 +29,8 @@
       "Bash(curl:*)",
       "Bash(git add:*)",
       "Bash(go run:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": [],

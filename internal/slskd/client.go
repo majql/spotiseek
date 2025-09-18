@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"spotiseek/internal/logger"
 	"spotiseek/pkg/models"
 )
 
@@ -51,7 +51,7 @@ func (c *Client) Login(username, password string) error {
 		}
 		
 		c.token = loginResponse.Token
-		log.Printf("Successfully logged in to Slskd and obtained JWT token")
+		logger.Info("Successfully logged in to Slskd and obtained JWT token")
 		return nil
 	}
 
@@ -108,7 +108,7 @@ func (c *Client) WaitForConnection(maxAttempts int) error {
 
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		if attempt > 1 {
-			log.Printf("Waiting %v before retry attempt %d/%d", backoff, attempt, maxAttempts)
+			logger.Debug("Waiting %v before retry attempt %d/%d", backoff, attempt, maxAttempts)
 			time.Sleep(backoff)
 			backoff *= 2
 			if backoff > 30*time.Second {
@@ -120,21 +120,21 @@ func (c *Client) WaitForConnection(maxAttempts int) error {
 		for _, endpoint := range endpoints {
 			resp, err := c.makeRequest("GET", endpoint, nil)
 			if err != nil {
-				log.Printf("Connection attempt %d/%d failed on %s: %v", attempt, maxAttempts, endpoint, err)
+				logger.Debug("Connection attempt %d/%d failed on %s: %v", attempt, maxAttempts, endpoint, err)
 				continue
 			}
 			resp.Body.Close()
 
 			if resp.StatusCode == http.StatusOK {
-				log.Printf("Successfully connected to Slskd on attempt %d using endpoint %s", attempt, endpoint)
+				logger.Debug("Successfully connected to Slskd on attempt %d using endpoint %s", attempt, endpoint)
 				return nil
 			}
 
-			log.Printf("Connection attempt %d/%d got status %d on %s", attempt, maxAttempts, resp.StatusCode, endpoint)
+			logger.Debug("Connection attempt %d/%d got status %d on %s", attempt, maxAttempts, resp.StatusCode, endpoint)
 			
 			// If we get 401/403, that means the service is running but needs auth
 			if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-				log.Printf("Slskd is running but requires authentication (status %d)", resp.StatusCode)
+				logger.Debug("Slskd is running but requires authentication (status %d)", resp.StatusCode)
 				return nil
 			}
 		}
@@ -157,21 +157,21 @@ func (c *Client) CheckSoulseekConnection() error {
 	for _, endpoint := range endpoints {
 		resp, err := c.makeRequest("GET", endpoint, nil)
 		if err != nil {
-			log.Printf("Connection check failed on %s: %v", endpoint, err)
+			logger.Debug("Connection check failed on %s: %v", endpoint, err)
 			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode == http.StatusOK {
-			log.Printf("Soulseek connection verified via %s", endpoint)
+			logger.Debug("Soulseek connection verified via %s", endpoint)
 			return nil
 		}
 		
-		log.Printf("Connection check got status %d on %s", resp.StatusCode, endpoint)
+		logger.Debug("Connection check got status %d on %s", resp.StatusCode, endpoint)
 	}
 
 	// Don't fail - just warn
-	log.Printf("Warning: Unable to verify Soulseek connection via any endpoint, but continuing anyway")
+	logger.Debug("Warning: Unable to verify Soulseek connection via any endpoint, but continuing anyway")
 	return nil
 }
 
@@ -202,7 +202,7 @@ func (c *Client) Search(query string) (string, error) {
 		return "", fmt.Errorf("search response missing or invalid ID")
 	}
 
-	log.Printf("Started search with ID %s for query: %s", searchID, query)
+	logger.Info("Started search with ID %s for query: %s", searchID, query)
 	return searchID, nil
 }
 
@@ -241,7 +241,7 @@ func (c *Client) WaitForSearchComplete(searchID string, timeout time.Duration) (
 		// Handle both simple states and compound states like "Completed, TimedOut"
 		if status.State == "Completed" || status.Completed || 
 		   status.State == "TimedOut" || strings.Contains(status.State, "Completed") || strings.Contains(status.State, "TimedOut") {
-			log.Printf("Search %s completed (state: %s) with %d results", searchID, status.State, len(status.Results))
+			logger.Info("Search %s completed (state: %s) with %d results", searchID, status.State, len(status.Results))
 			return status, nil
 		}
 
@@ -250,7 +250,7 @@ func (c *Client) WaitForSearchComplete(searchID string, timeout time.Duration) (
 			return status, fmt.Errorf("search %s was cancelled", searchID)
 		}
 
-		log.Printf("Search %s still running (state: %s), waiting %v...", searchID, status.State, pollInterval)
+		logger.Debug("Search %s still running (state: %s), waiting %v...", searchID, status.State, pollInterval)
 		time.Sleep(pollInterval)
 	}
 
@@ -320,7 +320,7 @@ func (c *Client) DownloadFile(username, filename string, size int64) error {
 		return fmt.Errorf("download request failed with status %d", resp.StatusCode)
 	}
 
-	log.Printf("Started download: %s from %s", filename, username)
+	logger.Info("Started download: %s from %s", filename, username)
 	return nil
 }
 
@@ -359,6 +359,6 @@ func (c *Client) SearchAndDownload(query string, matchFunc func([]models.SearchR
 		return fmt.Errorf("failed to start download: %w", err)
 	}
 
-	log.Printf("Successfully initiated download for query: %s", query)
+	logger.Info("Successfully initiated download for query: %s", query)
 	return nil
 }

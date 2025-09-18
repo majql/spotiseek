@@ -51,7 +51,7 @@ func (s *Server) Start() error {
 	}
 
 	log.Printf("Starting web server on port %d", s.port)
-	log.Printf("Access the web interface at: http://localhost:%d", s.port)
+	log.Printf("Access the web interface at: http://0.0.0.0:%d", s.port)
 
 	return s.server.ListenAndServe()
 }

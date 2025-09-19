@@ -96,7 +96,7 @@ func (m *Manager) removeNetwork(ctx context.Context, networkName string) error {
 	return m.client.NetworkRemove(ctx, networkName)
 }
 
-func (m *Manager) createSlskdContainer(ctx context.Context, playlistID, networkName, downloadPath string) (string, error) {
+func (m *Manager) createSlskdContainer(ctx context.Context, playlistID, networkName, downloadPath string, config *models.Config) (string, error) {
 	containerName := fmt.Sprintf("spotiseek-%s-slskd", playlistID)
 
 	// Ensure download directory exists
@@ -256,7 +256,7 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 
 	// Create slskd container
 	logger.Info("Creating slskd container")
-	slskdID, err := m.createSlskdContainer(ctx, playlistID, networkName, downloadPath)
+	slskdID, err := m.createSlskdContainer(ctx, playlistID, networkName, downloadPath, config)
 	if err != nil {
 		m.removeNetwork(ctx, networkName) // Cleanup
 		return nil, err

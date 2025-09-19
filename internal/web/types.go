@@ -18,6 +18,7 @@ type StatusResponse struct {
 
 type PlaylistStatus struct {
 	PlaylistID     string    `json:"playlist_id"`
+	PlaylistName   string    `json:"playlist_name"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"created_at"`
 	WorkerName     string    `json:"worker_name"`
@@ -57,11 +58,12 @@ func NewErrorResponse(err string) APIResponse {
 
 func ClusterInfoToPlaylistStatus(cluster models.ClusterInfo, status string) PlaylistStatus {
 	return PlaylistStatus{
-		PlaylistID:  cluster.PlaylistID,
-		Status:      status,
-		CreatedAt:   cluster.CreatedAt,
-		WorkerName:  cluster.ContainerNames.Worker,
-		SlskdName:   cluster.ContainerNames.Slskd,
-		NetworkName: cluster.NetworkName,
+		PlaylistID:   cluster.PlaylistID,
+		PlaylistName: cluster.PlaylistName,
+		Status:       status,
+		CreatedAt:    cluster.CreatedAt,
+		WorkerName:   cluster.ContainerNames.Worker,
+		SlskdName:    cluster.ContainerNames.Slskd,
+		NetworkName:  cluster.NetworkName,
 	}
 }

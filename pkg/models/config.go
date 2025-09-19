@@ -14,6 +14,7 @@ type Config struct {
 
 type ClusterInfo struct {
 	PlaylistID     string            `yaml:"playlist_id"`
+	PlaylistName   string            `yaml:"playlist_name"`
 	ContainerNames ContainerNames    `yaml:"container_names"`
 	NetworkName    string            `yaml:"network_name"`
 	CreatedAt      time.Time         `yaml:"created_at"`

@@ -330,7 +330,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 			logger.Debug("5. Try: docker images | grep -E '(majql/spotiseek-worker|slskd/slskd)'")
 		}
 
-		fmt.Printf("Playlist ID: %s\n", cluster.PlaylistID)
+		fmt.Printf("Playlist: %s (%s)\n", cluster.PlaylistName, cluster.PlaylistID)
 		fmt.Printf("  Status: %s\n", status)
 		fmt.Printf("  Created: %s\n", cluster.CreatedAt.Format(time.RFC3339))
 		fmt.Printf("  Worker: %s\n", cluster.ContainerNames.Worker)

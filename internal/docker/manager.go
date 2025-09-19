@@ -340,7 +340,8 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 	logger.Info("  Worker container: %s (alias: worker)", fmt.Sprintf("spotiseek-%s-worker", playlistID))
 
 	clusterInfo := &models.ClusterInfo{
-		PlaylistID: playlistID,
+		PlaylistID:   playlistID,
+		PlaylistName: playlistName,
 		ContainerNames: models.ContainerNames{
 			Worker: fmt.Sprintf("spotiseek-%s-worker", playlistID),
 			Slskd:  fmt.Sprintf("spotiseek-%s-slskd", playlistID),

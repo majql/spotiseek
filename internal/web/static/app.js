@@ -195,7 +195,7 @@ class SpotiseekUI {
         div.innerHTML = `
             <div class="playlist-header">
                 <div class="playlist-info">
-                    <h3 class="playlist-id">${this.escapeHtml(playlist.playlist_id)}</h3>
+                    <h3 class="playlist-id">${playlist.playlist_name ? this.escapeHtml(playlist.playlist_name) + ' (' + this.escapeHtml(playlist.playlist_id) + ')' : this.escapeHtml(playlist.playlist_id)}</h3>
                     <div class="playlist-status ${statusClass}">
                         ${statusIcon} ${this.escapeHtml(playlist.status)}
                     </div>

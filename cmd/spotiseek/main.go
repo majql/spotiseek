@@ -63,6 +63,9 @@ func init() {
 	rootCmd.PersistentFlags().String("working-dir", "", "Working directory for downloads")
 	rootCmd.PersistentFlags().Bool("debug", false, "Enable debug mode for detailed logging")
 
+	// Watch command flags
+	watchCmd.Flags().Bool("backfill", false, "Download all existing tracks in the playlist")
+
 	// Web command flags
 	webCmd.Flags().Int("port", 80, "Port to serve the web interface on")
 }
@@ -164,8 +167,11 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	// Get backfill flag
+	backfill, _ := cmd.Flags().GetBool("backfill")
+
 	logger.Info("Creating Docker cluster for playlist %s", playlistID)
-	clusterInfo, err := dockerManager.CreateCluster(ctx, playlistID, playlist.Name, cfg)
+	clusterInfo, err := dockerManager.CreateCluster(ctx, playlistID, playlist.Name, cfg, backfill)
 	if err != nil {
 		logger.Error("Failed to create cluster for playlist %s: %v", playlistID, err)
 		return fmt.Errorf("failed to create cluster: %w", err)

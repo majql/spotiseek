@@ -32,10 +32,10 @@ class SpotiseekAPI {
         return await this.request('/status');
     }
 
-    async watchPlaylist(playlist) {
+    async watchPlaylist(playlist, backfill = false) {
         return await this.request('/watch', {
             method: 'POST',
-            body: JSON.stringify({ playlist })
+            body: JSON.stringify({ playlist, backfill })
         });
     }
 
@@ -52,7 +52,8 @@ class SpotiseekUI {
         this.elements = {
             addForm: document.getElementById('add-playlist-form'),
             playlistInput: document.getElementById('playlist-input'),
-            addBtn: document.getElementById('add-btn'),
+            watchBtn: document.getElementById('watch-btn'),
+            watchBackfillBtn: document.getElementById('watch-backfill-btn'),
             refreshBtn: document.getElementById('refresh-btn'),
             loading: document.getElementById('loading'),
             errorMessage: document.getElementById('error-message'),
@@ -66,7 +67,8 @@ class SpotiseekUI {
     }
 
     bindEvents() {
-        this.elements.addForm.addEventListener('submit', (e) => this.handleAddPlaylist(e));
+        this.elements.watchBtn.addEventListener('click', (e) => this.handleAddPlaylist(e, false));
+        this.elements.watchBackfillBtn.addEventListener('click', (e) => this.handleAddPlaylist(e, true));
         this.elements.refreshBtn.addEventListener('click', () => this.loadStatus());
     }
 
@@ -90,7 +92,7 @@ class SpotiseekUI {
         setTimeout(() => this.elements.successMessage.classList.add('hidden'), 3000);
     }
 
-    async handleAddPlaylist(e) {
+    async handleAddPlaylist(e, backfill) {
         e.preventDefault();
 
         const playlist = this.elements.playlistInput.value.trim();
@@ -99,19 +101,32 @@ class SpotiseekUI {
             return;
         }
 
-        this.elements.addBtn.disabled = true;
-        this.elements.addBtn.textContent = 'Adding...';
+        // Disable both buttons and update text
+        this.elements.watchBtn.disabled = true;
+        this.elements.watchBackfillBtn.disabled = true;
+
+        const originalWatchText = this.elements.watchBtn.textContent;
+        const originalBackfillText = this.elements.watchBackfillBtn.textContent;
+
+        if (backfill) {
+            this.elements.watchBackfillBtn.textContent = 'Adding...';
+        } else {
+            this.elements.watchBtn.textContent = 'Adding...';
+        }
 
         try {
-            const result = await this.api.watchPlaylist(playlist);
+            const result = await this.api.watchPlaylist(playlist, backfill);
             this.showSuccess(result.message);
             this.elements.playlistInput.value = '';
             await this.loadStatus();
         } catch (error) {
             this.showError(error.message);
         } finally {
-            this.elements.addBtn.disabled = false;
-            this.elements.addBtn.textContent = 'Watch Playlist';
+            // Re-enable both buttons and restore text
+            this.elements.watchBtn.disabled = false;
+            this.elements.watchBackfillBtn.disabled = false;
+            this.elements.watchBtn.textContent = originalWatchText;
+            this.elements.watchBackfillBtn.textContent = originalBackfillText;
         }
     }
 

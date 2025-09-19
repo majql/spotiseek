@@ -180,18 +180,24 @@ func (m *Manager) createSlskdContainer(ctx context.Context, playlistID, networkN
 	return resp.ID, nil
 }
 
-func (m *Manager) createWorkerContainer(ctx context.Context, playlistID, networkName string, config *models.Config) (string, error) {
+func (m *Manager) createWorkerContainer(ctx context.Context, playlistID, networkName string, config *models.Config, backfill bool) (string, error) {
 	containerName := fmt.Sprintf("spotiseek-%s-worker", playlistID)
+
+	env := []string{
+		fmt.Sprintf("SPOTIFY_ID=%s", config.SpotifyID),
+		fmt.Sprintf("SPOTIFY_SECRET=%s", config.SpotifySecret),
+		fmt.Sprintf("SPOTIFY_PLAYLIST_ID=%s", playlistID),
+		"SLSKD_URL=http://slskd:5030",
+		"POLL_INTERVAL=60",
+	}
+
+	if backfill {
+		env = append(env, "BACKFILL=true")
+	}
 
 	containerConfig := &container.Config{
 		Image: WorkerImage,
-		Env: []string{
-			fmt.Sprintf("SPOTIFY_ID=%s", config.SpotifyID),
-			fmt.Sprintf("SPOTIFY_SECRET=%s", config.SpotifySecret),
-			fmt.Sprintf("SPOTIFY_PLAYLIST_ID=%s", playlistID),
-			"SLSKD_URL=http://slskd:5030",
-			"POLL_INTERVAL=60",
-		},
+		Env:   env,
 	}
 
 	hostConfig := &container.HostConfig{}
@@ -261,7 +267,7 @@ func (m *Manager) findContainerByName(ctx context.Context, name string) (string,
 	return "", fmt.Errorf("container %s not found", name)
 }
 
-func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlistName string, config *models.Config) (*models.ClusterInfo, error) {
+func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlistName string, config *models.Config, backfill bool) (*models.ClusterInfo, error) {
 	networkName := fmt.Sprintf("spotiseek-%s", playlistID)
 	
 	// Expand working directory path
@@ -308,7 +314,7 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 	// Create worker container (only if we have the image)
 	var workerID string
 	logger.Info("Creating worker container")
-	workerID, err = m.createWorkerContainer(ctx, playlistID, networkName, config)
+	workerID, err = m.createWorkerContainer(ctx, playlistID, networkName, config, backfill)
 	if err != nil {
 		logger.Warn("Failed to create worker container (image may not exist): %v", err)
 		logger.Warn("You'll need to build the worker image first")

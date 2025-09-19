@@ -65,9 +65,14 @@ func (w *Worker) Start(ctx context.Context) error {
 		logger.Info("Soulseek network connection verified")
 	}
 
-	// Set initial last check time to now (to avoid processing all existing tracks)
+	// Set initial last check time based on backfill setting
 	w.mu.Lock()
-	w.lastCheck = time.Now()
+	if w.config.Backfill {
+		w.lastCheck = time.Unix(0, 0) // Jan 1, 1970 - download all tracks
+		logger.Info("Backfill mode enabled - will download all existing tracks")
+	} else {
+		w.lastCheck = time.Now() // Normal mode - only new tracks
+	}
 	w.mu.Unlock()
 	logger.Debug("Initial check time set to: %v", w.lastCheck)
 

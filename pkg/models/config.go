@@ -34,4 +34,5 @@ type WorkerConfig struct {
 	PlaylistID    string
 	SlskdURL      string
 	Interval      time.Duration
+	Backfill      bool
 }

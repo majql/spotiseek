@@ -82,9 +82,14 @@ section + section {
     border-color: #667eea;
 }
 
-#add-btn {
+.button-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.watch-btn, .watch-backfill-btn {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -95,12 +100,25 @@ section + section {
     white-space: nowrap;
 }
 
-#add-btn:hover:not(:disabled) {
+.watch-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.watch-backfill-btn {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+}
+
+.watch-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-#add-btn:disabled {
+.watch-backfill-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+.watch-btn:disabled, .watch-backfill-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
@@ -294,6 +312,10 @@ section + section {
     }
 
     .input-group {
+        flex-direction: column;
+    }
+
+    .button-group {
         flex-direction: column;
     }
 

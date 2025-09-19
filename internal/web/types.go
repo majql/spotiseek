@@ -27,6 +27,7 @@ type PlaylistStatus struct {
 
 type WatchRequest struct {
 	Playlist string `json:"playlist"`
+	Backfill bool   `json:"backfill,omitempty"`
 }
 
 type WatchResponse struct {

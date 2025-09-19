@@ -115,7 +115,7 @@ func (s *Server) handleWatch(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	clusterInfo, err := dockerManager.CreateCluster(ctx, playlistID, playlist.Name, s.config)
+	clusterInfo, err := dockerManager.CreateCluster(ctx, playlistID, playlist.Name, s.config, req.Backfill)
 	if err != nil {
 		s.writeError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create cluster: %v", err))
 		return

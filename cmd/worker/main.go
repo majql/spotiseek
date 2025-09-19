@@ -46,8 +46,11 @@ func loadConfig() *models.WorkerConfig {
 	}
 	config.Interval = time.Duration(*interval) * time.Second
 
-	logger.Debug("Configuration values - Playlist ID: %s, Slskd URL: %s, Interval: %v",
-		config.PlaylistID, config.SlskdURL, config.Interval)
+	// Check for backfill flag
+	config.Backfill = os.Getenv("BACKFILL") == "true"
+
+	logger.Debug("Configuration values - Playlist ID: %s, Slskd URL: %s, Interval: %v, Backfill: %v",
+		config.PlaylistID, config.SlskdURL, config.Interval, config.Backfill)
 
 	// Validate required fields
 	if config.SpotifyID == "" {

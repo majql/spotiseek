@@ -1,75 +1,101 @@
-.PHONY: build build-worker build-spotiseek build-amd64 build-spotiseek-amd64 build-worker-amd64 clean test docker-build-worker
+# Spotiseek Makefile
+# Default target builds for production (linux/amd64)
 
-# Build both binaries
-build: build-spotiseek build-worker
+.PHONY: help build build-local clean test lint fmt deps dev-setup docker-build docker-push docker-deploy run
 
-# Build the main spotiseek binary
-build-spotiseek:
-	go build -o bin/spotiseek ./cmd/spotiseek
+# Default platform for production
+PLATFORM := linux/amd64
+LOCAL_PLATFORM := $(shell go env GOOS)/$(shell go env GOARCH)
 
-# Build the worker binary
-build-worker:
-	go build -o bin/worker ./cmd/worker
+# Docker settings
+WORKER_IMAGE := majql/spotiseek-worker
+WORKER_TAG := latest
 
-# Build both binaries for amd64
-build-amd64: build-spotiseek-amd64 build-worker-amd64
+help: ## Show this help message
+	@echo "Spotiseek Build Commands:"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-# Build the main spotiseek binary for amd64
-build-spotiseek-amd64:
+# ==============================================================================
+# LOCAL DEVELOPMENT (current platform - arm64 on your Mac)
+# ==============================================================================
+
+build-local: ## Build binaries for local development (current platform)
+	@echo "Building for local platform: $(LOCAL_PLATFORM)"
+	@mkdir -p bin/local
+	go build -o bin/local/spotiseek ./cmd/spotiseek
+	go build -o bin/local/worker ./cmd/worker
+
+run: build-local ## Build and run spotiseek locally
+	./bin/local/spotiseek
+
+run-worker: build-local ## Build and run worker locally
+	./bin/local/worker
+
+run-web: build-local ## Run web interface locally
+	./bin/local/spotiseek web --port 8080
+
+# ==============================================================================
+# PRODUCTION BUILD (linux/amd64 - default)
+# ==============================================================================
+
+build: ## Build binaries for production (linux/amd64)
+	@echo "Building for production platform: $(PLATFORM)"
+	@mkdir -p bin/amd64
 	GOOS=linux GOARCH=amd64 go build -o bin/amd64/spotiseek ./cmd/spotiseek
-
-# Build the worker binary for amd64
-build-worker-amd64:
 	GOOS=linux GOARCH=amd64 go build -o bin/amd64/worker ./cmd/worker
 
-# Build worker Docker image locally
-docker-build-worker:
+# ==============================================================================
+# DOCKER OPERATIONS
+# ==============================================================================
+
+docker-build: ## Build worker Docker image for production (linux/amd64)
+	@echo "Building Docker image for $(PLATFORM)"
+	docker buildx build --platform $(PLATFORM) -f Dockerfile.worker -t $(WORKER_IMAGE):$(WORKER_TAG) .
+
+docker-build-local: ## Build worker Docker image for local platform
+	@echo "Building Docker image for local platform: $(LOCAL_PLATFORM)"
 	docker build -f Dockerfile.worker -t spotiseek-worker:latest .
 
-# Build and tag worker image for Docker Hub
-docker-build-worker-hub:
-	docker build -f Dockerfile.worker -t majql/spotiseek-worker:latest .
+docker-push: docker-build ## Build and push worker image to Docker Hub
+	docker push $(WORKER_IMAGE):$(WORKER_TAG)
 
-# Push worker image to Docker Hub
-docker-push-worker:
-	docker push majql/spotiseek-worker:latest
+docker-deploy: docker-push ## Complete Docker deployment (build + push)
+	@echo "Docker image deployed: $(WORKER_IMAGE):$(WORKER_TAG)"
 
-# Build and push worker image to Docker Hub
-docker-deploy-worker: docker-build-worker-hub docker-push-worker
+# ==============================================================================
+# DEVELOPMENT TOOLS
+# ==============================================================================
 
-# Clean build artifacts
-clean:
-	rm -rf bin/
-
-# Run tests
-test:
+test: ## Run all tests
 	go test ./...
 
-# Install dependencies
-deps:
+lint: ## Run linter (requires golangci-lint)
+	golangci-lint run
+
+fmt: ## Format all Go code
+	go fmt ./...
+
+deps: ## Install/update Go dependencies
 	go mod download
 	go mod tidy
 
-# Format code
-fmt:
-	go fmt ./...
-
-# Run linter (requires golangci-lint)
-lint:
-	golangci-lint run
-
-# Build and run spotiseek locally
-run-spotiseek: build-spotiseek
-	./bin/spotiseek
-
-# Build and run worker locally
-run-worker: build-worker
-	./bin/worker
-
-# Run web interface (requires Spotify credentials)
-run-web: build-spotiseek
-	./bin/spotiseek web --port 8080
-
-# Development setup
-dev-setup:
+dev-setup: ## Install development tools
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# ==============================================================================
+# CLEANUP
+# ==============================================================================
+
+clean: ## Clean all build artifacts
+	rm -rf bin/
+
+# ==============================================================================
+# ALIASES (for backward compatibility)
+# ==============================================================================
+
+build-spotiseek: build ## Alias for build
+build-worker: build ## Alias for build
+build-amd64: build ## Alias for build
+docker-build-worker: docker-build-local ## Alias for docker-build-local
+docker-deploy-worker: docker-deploy ## Alias for docker-deploy

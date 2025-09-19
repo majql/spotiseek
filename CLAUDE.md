@@ -5,30 +5,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build and Development Commands
 
 ```bash
-# Build both binaries
-make build
+# LOCAL DEVELOPMENT (current platform - e.g., arm64 on Mac)
+make build-local        # Build for current platform
+make run                # Build and run spotiseek locally
+make run-worker         # Build and run worker locally
+make run-web            # Build and run web interface locally
 
-# Build individually
-make build-spotiseek     # Main application
-make build-worker        # Worker container binary
+# PRODUCTION BUILD (linux/amd64)
+make build              # Build for production (linux/amd64)
+make build-spotiseek    # Alias for build
+make build-worker       # Alias for build
 
-# Build worker Docker image locally (for development)
-make docker-build-worker
+# DOCKER OPERATIONS
+make docker-build-local    # Build worker image for local platform
+make docker-build          # Build worker image for production (linux/amd64)
+make docker-push           # Build and push to Docker Hub
+make docker-deploy         # Complete deployment (build + push)
 
-# Build and push worker image to Docker Hub (for releases)
-make docker-deploy-worker
-
-# Development tools
+# DEVELOPMENT TOOLS
 make test               # Run all tests
 make fmt                # Format code
 make lint               # Run linter (requires golangci-lint)
 make deps               # Install/update dependencies
 make dev-setup          # Install development tools
 
-# Run locally (after building)
-./bin/spotiseek watch <playlist-id-or-url>
-./bin/spotiseek forget <playlist-id>
-./bin/spotiseek status
+# CLEANUP
+make clean              # Clean all build artifacts
+
+# USAGE EXAMPLES
+./bin/local/spotiseek watch <playlist-id-or-url>
+./bin/local/spotiseek forget <playlist-id>
+./bin/local/spotiseek status
+./bin/local/spotiseek web --port 8080
 ```
 
 ## Architecture Overview
@@ -36,7 +44,7 @@ make dev-setup          # Install development tools
 Spotiseek is a dual-component system for automated Spotify playlist monitoring and P2P downloading:
 
 ### Two-Binary Architecture
-- **`spotiseek`** (main): Manages Docker clusters, handles CLI commands, orchestrates worker containers
+- **`spotiseek`** (main): Manages Docker clusters, handles CLI commands, orchestrates worker containers, serves web interface
 - **`worker`** (containerized): Monitors individual playlists, communicates with Slskd, downloads tracks
 
 ### Docker Cluster Pattern
@@ -57,6 +65,7 @@ Each watched playlist gets an isolated Docker cluster:
 - **Spotify Web API**: Playlist monitoring, track metadata
 - **Slskd REST API**: P2P search, download management
 - **Docker Engine API**: Container lifecycle management
+- **Web Interface**: Browser-based management via HTTP server (port 80 default)
 
 ## Critical Components
 
@@ -83,6 +92,12 @@ Handles complete container lifecycle:
 - **Runtime config**: Spotify API credentials, working directories
 - **Cluster persistence**: `~/.spotiseek/clusters.yml` tracks active containers
 - **Hierarchical loading**: CLI → file → env → defaults
+
+### Web Interface (`internal/web/`)
+- **HTTP server**: Serves management interface on configurable port
+- **REST endpoints**: Status monitoring, playlist management
+- **Static assets**: Frontend UI in `internal/web/static/`
+- **Real-time status**: Cluster and container health monitoring
 
 ## File Matching Algorithm
 
@@ -113,6 +128,8 @@ Example query transformation:
 - **Spotify API**: Requires valid client ID/secret for playlist access
 - **Slskd configuration**: Auto-configured with hardcoded credentials in containers
 - **Working directory**: Default `~/spotiseek/`, creates subdirectories per playlist name
+- **Cross-platform builds**: Use `make build-local` for development, `make build` for production
+- **Docker image**: Worker image hosted at `majql/spotiseek-worker:latest`
 
 ## Common Debugging
 
@@ -120,3 +137,19 @@ Example query transformation:
 - **Network connectivity**: Worker retries Slskd connection with exponential backoff
 - **Match decisions**: Worker logs detailed scoring rationale for file selection
 - **Cluster state**: Check `~/.spotiseek/clusters.yml` for active containers
+- **Web interface**: Access via `http://localhost:8080` (or configured port)
+- **Slskd access**: Check port mappings with `docker port spotiseek-{PLAYLIST_ID}-slskd 5030`
+
+## CLI Commands
+
+```bash
+# Core operations
+spotiseek watch <playlist-url>     # Start monitoring playlist
+spotiseek forget <playlist-id>     # Stop monitoring playlist
+spotiseek status                   # Show all watched playlists
+spotiseek web --port 8080          # Start web interface
+
+# With configuration flags
+spotiseek watch <playlist> --spotify-id=<id> --spotify-secret=<secret> --working-dir=<dir> --debug
+spotiseek watch <playlist> --backfill  # Download existing tracks too
+```

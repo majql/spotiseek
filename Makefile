@@ -16,11 +16,11 @@ build-amd64: build-spotiseek-amd64 build-worker-amd64
 
 # Build the main spotiseek binary for amd64
 build-spotiseek-amd64:
-	GOOS=linux GOARCH=amd64 go build -o bin/spotiseek-amd64 ./cmd/spotiseek
+	GOOS=linux GOARCH=amd64 go build -o bin/amd64/spotiseek ./cmd/spotiseek
 
 # Build the worker binary for amd64
 build-worker-amd64:
-	GOOS=linux GOARCH=amd64 go build -o bin/worker-amd64 ./cmd/worker
+	GOOS=linux GOARCH=amd64 go build -o bin/amd64/worker ./cmd/worker
 
 # Build worker Docker image
 docker-build-worker:

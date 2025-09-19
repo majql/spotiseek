@@ -22,9 +22,20 @@ build-spotiseek-amd64:
 build-worker-amd64:
 	GOOS=linux GOARCH=amd64 go build -o bin/amd64/worker ./cmd/worker
 
-# Build worker Docker image
+# Build worker Docker image locally
 docker-build-worker:
 	docker build -f Dockerfile.worker -t spotiseek-worker:latest .
+
+# Build and tag worker image for Docker Hub
+docker-build-worker-hub:
+	docker build -f Dockerfile.worker -t majql/spotiseek-worker:latest .
+
+# Push worker image to Docker Hub
+docker-push-worker:
+	docker push majql/spotiseek-worker:latest
+
+# Build and push worker image to Docker Hub
+docker-deploy-worker: docker-build-worker-hub docker-push-worker
 
 # Clean build artifacts
 clean:

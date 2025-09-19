@@ -12,8 +12,11 @@ make build
 make build-spotiseek     # Main application
 make build-worker        # Worker container binary
 
-# Build worker Docker image (required for runtime)
+# Build worker Docker image locally (for development)
 make docker-build-worker
+
+# Build and push worker image to Docker Hub (for releases)
+make docker-deploy-worker
 
 # Development tools
 make test               # Run all tests

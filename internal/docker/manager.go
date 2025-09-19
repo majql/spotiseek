@@ -46,7 +46,7 @@ func sanitizeForFilesystem(name string) string {
 
 const (
 	SlskdImage  = "slskd/slskd:latest"
-	WorkerImage = "spotiseek-worker:latest"
+	WorkerImage = "majql/spotiseek-worker:latest"
 )
 
 type Manager struct {

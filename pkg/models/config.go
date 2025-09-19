@@ -7,6 +7,8 @@ import (
 type Config struct {
 	SpotifyID     string `yaml:"spotify_id"`
 	SpotifySecret string `yaml:"spotify_secret"`
+	SlskUsername  string `yaml:"slsk_username"`
+	SlskPassword  string `yaml:"slsk_password"`
 	WorkingDir    string `yaml:"working_dir"`
 }
 

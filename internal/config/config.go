@@ -126,7 +126,7 @@ func SaveClusters(clusters *models.ClustersConfig) error {
 
 // MergeWithFlags merges configuration with command line flags and environment variables
 // Priority: flags > config file > environment variables
-func MergeWithFlags(config *models.Config, spotifyID, spotifySecret, workingDir string) {
+func MergeWithFlags(config *models.Config, spotifyID, spotifySecret, slskUsername, slskPassword, workingDir string) {
 	if spotifyID != "" {
 		config.SpotifyID = spotifyID
 	} else if envID := os.Getenv("SPOTIFY_ID"); envID != "" && config.SpotifyID == "" {
@@ -137,6 +137,18 @@ func MergeWithFlags(config *models.Config, spotifyID, spotifySecret, workingDir 
 		config.SpotifySecret = spotifySecret
 	} else if envSecret := os.Getenv("SPOTIFY_SECRET"); envSecret != "" && config.SpotifySecret == "" {
 		config.SpotifySecret = envSecret
+	}
+
+	if slskUsername != "" {
+		config.SlskUsername = slskUsername
+	} else if envUsername := os.Getenv("SLSK_USERNAME"); envUsername != "" && config.SlskUsername == "" {
+		config.SlskUsername = envUsername
+	}
+
+	if slskPassword != "" {
+		config.SlskPassword = slskPassword
+	} else if envPassword := os.Getenv("SLSK_PASSWORD"); envPassword != "" && config.SlskPassword == "" {
+		config.SlskPassword = envPassword
 	}
 
 	if workingDir != "" {
@@ -153,5 +165,14 @@ func ValidateConfig(config *models.Config) error {
 	if config.SpotifySecret == "" {
 		return fmt.Errorf("spotify secret is required (--spotify-secret, config file, or SPOTIFY_SECRET env var)")
 	}
+
+	// SLSK credentials are optional but warn if missing
+	if config.SlskUsername == "" {
+		fmt.Printf("Warning: SLSK username not provided (--slsk-username, config file, or SLSK_USERNAME env var). Downloads may fail.\n")
+	}
+	if config.SlskPassword == "" {
+		fmt.Printf("Warning: SLSK password not provided (--slsk-password, config file, or SLSK_PASSWORD env var). Downloads may fail.\n")
+	}
+
 	return nil
 }

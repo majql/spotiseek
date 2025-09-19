@@ -58,6 +58,8 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().String("spotify-id", "", "Spotify API client ID")
 	rootCmd.PersistentFlags().String("spotify-secret", "", "Spotify API client secret")
+	rootCmd.PersistentFlags().String("slsk-username", "", "Soulseek username")
+	rootCmd.PersistentFlags().String("slsk-password", "", "Soulseek password")
 	rootCmd.PersistentFlags().String("working-dir", "", "Working directory for downloads")
 
 	// Web command flags
@@ -74,10 +76,12 @@ func loadAndValidateConfig(cmd *cobra.Command) (*models.Config, error) {
 	// Get flag values
 	spotifyID, _ := cmd.Flags().GetString("spotify-id")
 	spotifySecret, _ := cmd.Flags().GetString("spotify-secret")
+	slskUsername, _ := cmd.Flags().GetString("slsk-username")
+	slskPassword, _ := cmd.Flags().GetString("slsk-password")
 	workingDir, _ := cmd.Flags().GetString("working-dir")
 
 	// Merge with flags and environment
-	config.MergeWithFlags(cfg, spotifyID, spotifySecret, workingDir)
+	config.MergeWithFlags(cfg, spotifyID, spotifySecret, slskUsername, slskPassword, workingDir)
 
 	// Validate
 	if err := config.ValidateConfig(cfg); err != nil {

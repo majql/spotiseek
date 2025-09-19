@@ -91,8 +91,20 @@ func loadAndValidateConfig(cmd *cobra.Command) (*models.Config, error) {
 	workingDir, _ := cmd.Flags().GetString("working-dir")
 
 	logger.Debug("Flag values - spotify-id: %s, working-dir: %s",
-		func() string { if spotifyID != "" { return spotifyID } else { return "(from config/env)" } }(),
-		func() string { if workingDir != "" { return workingDir } else { return "(from config/env)" } }())
+		func() string {
+			if spotifyID != "" {
+				return spotifyID
+			} else {
+				return "(from config/env)"
+			}
+		}(),
+		func() string {
+			if workingDir != "" {
+				return workingDir
+			} else {
+				return "(from config/env)"
+			}
+		}())
 
 	// Merge with flags and environment
 	config.MergeWithFlags(cfg, spotifyID, spotifySecret, slskUsername, slskPassword, workingDir)

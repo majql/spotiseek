@@ -1,8 +1,9 @@
 package web
 
 import (
-	"time"
+	"spotiseek/internal/utils"
 	"spotiseek/pkg/models"
+	"time"
 )
 
 type APIResponse struct {
@@ -17,13 +18,14 @@ type StatusResponse struct {
 }
 
 type PlaylistStatus struct {
-	PlaylistID     string    `json:"playlist_id"`
-	PlaylistName   string    `json:"playlist_name"`
-	Status         string    `json:"status"`
-	CreatedAt      time.Time `json:"created_at"`
-	WorkerName     string    `json:"worker_name"`
-	SlskdName      string    `json:"slskd_name"`
-	NetworkName    string    `json:"network_name"`
+	PlaylistID   string           `json:"playlist_id"`
+	PlaylistName string           `json:"playlist_name"`
+	Status       string           `json:"status"`
+	CreatedAt    time.Time        `json:"created_at"`
+	WorkerName   string           `json:"worker_name"`
+	SlskdName    string           `json:"slskd_name"`
+	NetworkName  string           `json:"network_name"`
+	SlskdInfo    *utils.SlskdInfo `json:"slskd_info,omitempty"`
 }
 
 type WatchRequest struct {

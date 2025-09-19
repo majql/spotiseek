@@ -45,11 +45,11 @@ func (c *Client) Login(username, password string) error {
 		var loginResponse struct {
 			Token string `json:"token"`
 		}
-		
+
 		if err := json.NewDecoder(resp.Body).Decode(&loginResponse); err != nil {
 			return fmt.Errorf("failed to parse login response: %w", err)
 		}
-		
+
 		c.token = loginResponse.Token
 		logger.Info("Successfully logged in to Slskd and obtained JWT token")
 		return nil
@@ -75,7 +75,7 @@ func (c *Client) makeRequest(method, endpoint string, body interface{}) (*http.R
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	// Use JWT token authentication if available, otherwise fall back to basic auth for login
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
@@ -99,7 +99,7 @@ func (c *Client) WaitForConnection(maxAttempts int) error {
 	// Try different endpoints that might work
 	endpoints := []string{
 		"/api/v0/application",
-		"/api/v0/application/state", 
+		"/api/v0/application/state",
 		"/api/v0/server/state",
 		"/api/v0/session",
 		"/swagger",
@@ -131,7 +131,7 @@ func (c *Client) WaitForConnection(maxAttempts int) error {
 			}
 
 			logger.Debug("Connection attempt %d/%d got status %d on %s", attempt, maxAttempts, resp.StatusCode, endpoint)
-			
+
 			// If we get 401/403, that means the service is running but needs auth
 			if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 				logger.Debug("Slskd is running but requires authentication (status %d)", resp.StatusCode)
@@ -148,7 +148,7 @@ func (c *Client) CheckSoulseekConnection() error {
 	// Try multiple endpoints to check connection status
 	endpoints := []string{
 		"/api/v0/server/state",
-		"/api/v0/server", 
+		"/api/v0/server",
 		"/api/v0/application/state",
 		"/api/v0/application",
 		"/metrics",
@@ -166,7 +166,7 @@ func (c *Client) CheckSoulseekConnection() error {
 			logger.Debug("Soulseek connection verified via %s", endpoint)
 			return nil
 		}
-		
+
 		logger.Debug("Connection check got status %d on %s", resp.StatusCode, endpoint)
 	}
 
@@ -239,8 +239,8 @@ func (c *Client) WaitForSearchComplete(searchID string, timeout time.Duration) (
 
 		// Check if search is completed (either successfully or timed out with results)
 		// Handle both simple states and compound states like "Completed, TimedOut"
-		if status.State == "Completed" || status.Completed || 
-		   status.State == "TimedOut" || strings.Contains(status.State, "Completed") || strings.Contains(status.State, "TimedOut") {
+		if status.State == "Completed" || status.Completed ||
+			status.State == "TimedOut" || strings.Contains(status.State, "Completed") || strings.Contains(status.State, "TimedOut") {
 			logger.Info("Search %s completed (state: %s) with %d results", searchID, status.State, len(status.Results))
 			return status, nil
 		}
@@ -298,7 +298,7 @@ func (c *Client) GetSearchResults(searchID string) ([]models.SearchResult, error
 	return results, nil
 }
 
-// DownloadFile starts downloading a file  
+// DownloadFile starts downloading a file
 func (c *Client) DownloadFile(username, filename string, size int64) error {
 	// Use the correct slskd API format: array of QueueDownloadRequest
 	downloadRequests := []map[string]interface{}{

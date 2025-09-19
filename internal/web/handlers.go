@@ -11,6 +11,7 @@ import (
 	"spotiseek/internal/config"
 	"spotiseek/internal/docker"
 	"spotiseek/internal/spotify"
+	"spotiseek/internal/utils"
 )
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +46,9 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	// Get request host for Slskd URL generation
+	requestHost := utils.GetRequestHost(r)
+
 	for _, cluster := range clusters.Clusters {
 		status, err := dockerManager.GetClusterStatus(ctx, cluster.PlaylistID)
 		if err != nil {
@@ -52,6 +56,15 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		}
 
 		playlistStatus := ClusterInfoToPlaylistStatus(cluster, status)
+
+		// Add Slskd information if container is running
+		if status == "running" {
+			slskdInfo, err := utils.GetSlskdInfo(ctx, dockerManager, cluster.PlaylistID, requestHost)
+			if err == nil {
+				playlistStatus.SlskdInfo = slskdInfo
+			}
+		}
+
 		response.Playlists = append(response.Playlists, playlistStatus)
 	}
 

@@ -336,6 +336,49 @@ section + section {
     .forget-btn {
         align-self: flex-start;
     }
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.slskd-login-btn {
+    padding: 8px 16px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.slskd-login-btn:hover {
+    background: #2563eb;
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .slskd-login-btn,
+    .forget-btn {
+        width: 100%;
+        justify-content: center;
+    }
 
     .playlist-details {
         grid-template-columns: 1fr;

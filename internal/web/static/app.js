@@ -200,9 +200,12 @@ class SpotiseekUI {
                         ${statusIcon} ${this.escapeHtml(playlist.status)}
                     </div>
                 </div>
-                <button class="forget-btn" onclick="app.handleForgetPlaylist('${this.escapeHtml(playlist.playlist_id)}')">
-                    🗑️ Stop Watching
-                </button>
+                <div class="action-buttons">
+                    ${this.createSlskdLoginButton(playlist)}
+                    <button class="forget-btn" onclick="app.handleForgetPlaylist('${this.escapeHtml(playlist.playlist_id)}')">
+                        🗑️ Stop Watching
+                    </button>
+                </div>
             </div>
             <div class="playlist-details">
                 <div class="detail-item">
@@ -221,6 +224,35 @@ class SpotiseekUI {
         `;
 
         return div;
+    }
+
+    createSlskdLoginButton(playlist) {
+        if (!playlist.slskd_info || playlist.status.toLowerCase() !== 'running') {
+            return '';
+        }
+
+        const info = playlist.slskd_info;
+        return `
+            <button class="slskd-login-btn" onclick="app.openSlskd('${this.escapeHtml(info.url)}')">
+                🎵 Login
+            </button>
+        `;
+    }
+
+    openSlskd(url) {
+        try {
+            // Open Slskd in a new, mid-sized window without controls
+            const windowFeatures = 'width=1024,height=768,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no,status=no';
+            const slskdWindow = window.open(url, 'slskd', windowFeatures);
+
+            if (!slskdWindow) {
+                this.showError('Unable to open Slskd window. Please check your popup blocker.');
+                return;
+            }
+
+        } catch (error) {
+            this.showError('Failed to open Slskd interface: ' + error.message);
+        }
     }
 
     getStatusClass(status) {

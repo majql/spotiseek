@@ -47,7 +47,7 @@ func TransliterateToASCII(input string) string {
 		'ÿ': "y", 'Ÿ': "Y",
 		'ý': "y", 'Ý': "Y",
 	}
-	
+
 	var result strings.Builder
 	for _, r := range input {
 		if mapped, exists := charMappings[r]; exists {
@@ -66,7 +66,7 @@ func TransliterateToASCII(input string) string {
 			}
 		}
 	}
-	
+
 	return result.String()
 }
 
@@ -119,13 +119,13 @@ func extractRelevantFilename(filename string) string {
 	// Get the actual filename (after last slash)
 	parts := strings.Split(filename, "/")
 	actualFilename := parts[len(parts)-1]
-	
+
 	// Also include the parent directory for context if available
 	if len(parts) >= 2 {
 		parentDir := parts[len(parts)-2]
 		actualFilename = parentDir + " " + actualFilename
 	}
-	
+
 	return actualFilename
 }
 
@@ -198,7 +198,7 @@ func CalculateMatchScore(query, filename string) MatchScore {
 		finalScore = 0
 	}
 
-	reason := fmt.Sprintf("base:%.2f seq:%.2f orig:%.2f penalty:%.2f (%d/%d words)", 
+	reason := fmt.Sprintf("base:%.2f seq:%.2f orig:%.2f penalty:%.2f (%d/%d words)",
 		baseScore, sequenceBonus, originalBonus, extraWordsPenalty, matchingWords, len(queryWords))
 
 	return MatchScore{
@@ -207,7 +207,6 @@ func CalculateMatchScore(query, filename string) MatchScore {
 		Reason:   reason,
 	}
 }
-
 
 // FilterMP3Files filters search results to only include MP3 files
 func FilterMP3Files(results []models.SearchResult) []models.SearchResult {

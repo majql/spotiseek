@@ -165,10 +165,10 @@ func (c *Client) GetPlaylistTracks(playlistID string) ([]models.Track, error) {
 			Items []struct {
 				AddedAt time.Time `json:"added_at"`
 				Track   struct {
-					ID       string `json:"id"`
-					Name     string `json:"name"`
+					ID       string          `json:"id"`
+					Name     string          `json:"name"`
 					Artists  []models.Artist `json:"artists"`
-					Duration int    `json:"duration_ms"`
+					Duration int             `json:"duration_ms"`
 				} `json:"track"`
 			} `json:"items"`
 			Total int `json:"total"`
@@ -216,10 +216,10 @@ func (c *Client) GetNewTracks(playlistID string, since time.Time) ([]models.Trac
 		isNew := track.AddedAt.After(since)
 		// Log last 5 tracks or any new tracks for debugging (new tracks are usually at the end)
 		if i >= len(tracks)-5 || isNew {
-			log.Printf("Track %d: '%s' by %s - Added: %v (New: %v)", 
+			log.Printf("Track %d: '%s' by %s - Added: %v (New: %v)",
 				i+1, track.Name, c.formatArtists(track.Artists), track.AddedAt, isNew)
 		}
-		
+
 		if isNew {
 			newTracks = append(newTracks, track)
 		}

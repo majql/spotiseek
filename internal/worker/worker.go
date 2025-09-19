@@ -144,7 +144,7 @@ func (w *Worker) checkForNewTracks(ctx context.Context) error {
 		wg.Add(1)
 		go func(trackIndex int, t models.Track) {
 			defer wg.Done()
-			semaphore <- struct{}{} // Acquire semaphore
+			semaphore <- struct{}{}        // Acquire semaphore
 			defer func() { <-semaphore }() // Release semaphore
 
 			logger.Debug("Worker %d starting track: %s", trackIndex+1, t.Name)

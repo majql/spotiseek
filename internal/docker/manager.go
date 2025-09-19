@@ -31,16 +31,16 @@ func sanitizeForFilesystem(name string) string {
 	sanitized = strings.ReplaceAll(sanitized, "<", "-")
 	sanitized = strings.ReplaceAll(sanitized, ">", "-")
 	sanitized = strings.ReplaceAll(sanitized, "|", "-")
-	
+
 	// Remove leading/trailing spaces and replace multiple spaces with single space
 	sanitized = strings.TrimSpace(sanitized)
 	sanitized = regexp.MustCompile(`\s+`).ReplaceAllString(sanitized, " ")
-	
+
 	// Limit length to reasonable filesystem limits
 	if len(sanitized) > 200 {
 		sanitized = sanitized[:200]
 	}
-	
+
 	return sanitized
 }
 
@@ -130,12 +130,12 @@ func (m *Manager) createSlskdContainer(ctx context.Context, playlistID, networkN
 	}
 
 	exposedPorts := nat.PortSet{
-		"5030/tcp": struct{}{},
+		"5030/tcp":  struct{}{},
 		"50300/tcp": struct{}{},
 	}
 
 	portBindings := nat.PortMap{
-		"5030/tcp": []nat.PortBinding{{HostPort: "0"}}, // Random port for web interface
+		"5030/tcp":  []nat.PortBinding{{HostPort: "0"}}, // Random port for web interface
 		"50300/tcp": []nat.PortBinding{{HostPort: "0"}}, // Random port for Soulseek connections
 	}
 
@@ -269,7 +269,7 @@ func (m *Manager) findContainerByName(ctx context.Context, name string) (string,
 
 func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlistName string, config *models.Config, backfill bool) (*models.ClusterInfo, error) {
 	networkName := fmt.Sprintf("spotiseek-%s", playlistID)
-	
+
 	// Expand working directory path
 	workingDir := config.WorkingDir
 	if strings.HasPrefix(workingDir, "~/") {
@@ -279,7 +279,7 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 		}
 		workingDir = filepath.Join(homeDir, workingDir[2:])
 	}
-	
+
 	// Sanitize playlist name for filesystem use
 	sanitizedName := sanitizeForFilesystem(playlistName)
 	downloadPath := filepath.Join(workingDir, sanitizedName)
@@ -433,4 +433,31 @@ func (m *Manager) GetClusterStatus(ctx context.Context, playlistID string) (stri
 		containersFound, len(containerNames), status)
 
 	return status, nil
+}
+
+// GetSlskdPort returns the host port mapped to the Slskd container's port 5030
+func (m *Manager) GetSlskdPort(ctx context.Context, playlistID string) (string, error) {
+	containerName := fmt.Sprintf("spotiseek-%s-slskd", playlistID)
+
+	containerID, err := m.findContainerByName(ctx, containerName)
+	if err != nil {
+		return "", fmt.Errorf("slskd container not found: %w", err)
+	}
+
+	inspect, err := m.client.ContainerInspect(ctx, containerID)
+	if err != nil {
+		return "", fmt.Errorf("failed to inspect slskd container: %w", err)
+	}
+
+	if !inspect.State.Running {
+		return "", fmt.Errorf("slskd container is not running")
+	}
+
+	// Find the host port mapped to container port 5030
+	portBindings := inspect.NetworkSettings.Ports
+	if bindings, exists := portBindings["5030/tcp"]; exists && len(bindings) > 0 {
+		return bindings[0].HostPort, nil
+	}
+
+	return "", fmt.Errorf("port 5030 not found in container port bindings")
 }

@@ -54,11 +54,25 @@ type Manager struct {
 }
 
 func NewManager() (*Manager, error) {
+	logger.Debug("Creating Docker client...")
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
+		logger.Debug("Failed to create Docker client: %v", err)
 		return nil, fmt.Errorf("failed to create Docker client: %w", err)
 	}
 
+	// Test Docker connection
+	logger.Debug("Testing Docker daemon connection...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = cli.Ping(ctx)
+	if err != nil {
+		logger.Debug("Failed to ping Docker daemon: %v", err)
+		return nil, fmt.Errorf("failed to connect to Docker daemon: %w", err)
+	}
+
+	logger.Debug("Docker client created and connection verified")
 	return &Manager{client: cli}, nil
 }
 
@@ -67,18 +81,23 @@ func (m *Manager) Close() error {
 }
 
 func (m *Manager) pullImage(ctx context.Context, imageName string) error {
+	logger.Debug("Starting pull for image: %s", imageName)
 	reader, err := m.client.ImagePull(ctx, imageName, image.PullOptions{})
 	if err != nil {
+		logger.Debug("Failed to start pull for image %s: %v", imageName, err)
 		return fmt.Errorf("failed to pull image %s: %w", imageName, err)
 	}
 	defer reader.Close()
 
 	// Must read the response stream completely
+	logger.Debug("Reading pull response for image: %s", imageName)
 	_, err = io.Copy(io.Discard, reader)
 	if err != nil {
+		logger.Debug("Failed to read pull response for %s: %v", imageName, err)
 		return fmt.Errorf("failed to read pull response for %s: %w", imageName, err)
 	}
 
+	logger.Debug("Successfully pulled image: %s", imageName)
 	return nil
 }
 
@@ -207,19 +226,38 @@ func (m *Manager) removeContainer(ctx context.Context, containerID string) error
 }
 
 func (m *Manager) findContainerByName(ctx context.Context, name string) (string, error) {
+	logger.Debug("Searching for container with name: %s", name)
+
 	containers, err := m.client.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
+		logger.Debug("Failed to list containers: %v", err)
 		return "", err
+	}
+
+	logger.Debug("Found %d total containers", len(containers))
+
+	if logger.IsDebugMode() {
+		logger.Debug("Listing all container names:")
+		for _, container := range containers {
+			for _, containerName := range container.Names {
+				cleanName := strings.TrimPrefix(containerName, "/")
+				logger.Debug("  - %s (ID: %s, Image: %s, State: %s)",
+					cleanName, container.ID[:12], container.Image, container.State)
+			}
+		}
 	}
 
 	for _, container := range containers {
 		for _, containerName := range container.Names {
-			if strings.TrimPrefix(containerName, "/") == name {
+			cleanName := strings.TrimPrefix(containerName, "/")
+			if cleanName == name {
+				logger.Debug("Found matching container: %s -> %s", name, container.ID[:12])
 				return container.ID, nil
 			}
 		}
 	}
 
+	logger.Debug("No container found matching name: %s", name)
 	return "", fmt.Errorf("container %s not found", name)
 }
 
@@ -245,6 +283,11 @@ func (m *Manager) CreateCluster(ctx context.Context, playlistID string, playlist
 	// Pull required images
 	logger.Info("Pulling Docker images...")
 	if err := m.pullImage(ctx, SlskdImage); err != nil {
+		return nil, err
+	}
+
+	logger.Debug("Pulling worker image: %s", WorkerImage)
+	if err := m.pullImage(ctx, WorkerImage); err != nil {
 		return nil, err
 	}
 
@@ -343,27 +386,44 @@ func (m *Manager) DestroyCluster(ctx context.Context, playlistID string) error {
 }
 
 func (m *Manager) GetClusterStatus(ctx context.Context, playlistID string) (string, error) {
+	logger.Debug("Getting cluster status for playlist %s", playlistID)
+
 	containerNames := []string{
 		fmt.Sprintf("spotiseek-%s-worker", playlistID),
 		fmt.Sprintf("spotiseek-%s-slskd", playlistID),
 	}
 
 	status := "running"
+	containersFound := 0
+
 	for _, name := range containerNames {
+		logger.Debug("Looking for container: %s", name)
 		containerID, err := m.findContainerByName(ctx, name)
 		if err != nil {
+			logger.Debug("Container %s not found: %v", name, err)
 			return "not found", nil
 		}
 
+		logger.Debug("Found container %s with ID: %s", name, containerID[:12])
+		containersFound++
+
 		inspect, err := m.client.ContainerInspect(ctx, containerID)
 		if err != nil {
+			logger.Debug("Failed to inspect container %s: %v", name, err)
 			return "error", err
 		}
 
+		logger.Debug("Container %s state - Running: %v, Status: %s, ExitCode: %d",
+			name, inspect.State.Running, inspect.State.Status, inspect.State.ExitCode)
+
 		if !inspect.State.Running {
 			status = "stopped"
+			logger.Debug("Container %s is not running, cluster status: %s", name, status)
 		}
 	}
+
+	logger.Debug("Cluster status check complete - Found %d/%d containers, final status: %s",
+		containersFound, len(containerNames), status)
 
 	return status, nil
 }

@@ -302,13 +302,26 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	for i, cluster := range clusters.Clusters {
 		logger.Debug("Checking status for cluster %d/%d - Playlist: %s", i+1, len(clusters.Clusters), cluster.PlaylistID)
+		logger.Debug("Expected containers: %s, %s", cluster.ContainerNames.Worker, cluster.ContainerNames.Slskd)
+		logger.Debug("Expected network: %s", cluster.NetworkName)
 
 		status, err := dockerManager.GetClusterStatus(ctx, cluster.PlaylistID)
 		if err != nil {
 			logger.Debug("Failed to get status for playlist %s: %v", cluster.PlaylistID, err)
+			logger.Error("Error getting cluster status for playlist %s: %v", cluster.PlaylistID, err)
 			status = "error"
 		} else {
 			logger.Debug("Status for playlist %s: %s", cluster.PlaylistID, status)
+		}
+
+		// In debug mode, provide additional diagnostic information
+		if logger.IsDebugMode() && status == "not found" {
+			logger.Debug("Troubleshooting 'not found' status for playlist %s:", cluster.PlaylistID)
+			logger.Debug("1. Checking if Docker daemon is accessible...")
+			logger.Debug("2. Expected worker image: %s", "majql/spotiseek-worker:latest")
+			logger.Debug("3. Expected slskd image: %s", "slskd/slskd:latest")
+			logger.Debug("4. Try: docker ps -a | grep %s", cluster.PlaylistID)
+			logger.Debug("5. Try: docker images | grep -E '(majql/spotiseek-worker|slskd/slskd)'")
 		}
 
 		fmt.Printf("Playlist ID: %s\n", cluster.PlaylistID)
